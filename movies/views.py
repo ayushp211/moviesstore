@@ -1,6 +1,6 @@
 
 from django.shortcuts import render, redirect, get_object_or_404
-from .models import Movie, Review, Petition
+from .models import Movie, Review, Petition, Rating
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.http import JsonResponse
@@ -8,6 +8,7 @@ from django.utils import timezone
 from django.db.models import Count, Sum
 from cart.models import Order, Item
 from datetime import datetime, timedelta
+from .forms import RatingForm
 
 def index(request):
     search_term = request.GET.get('search')
@@ -22,14 +23,25 @@ def index(request):
     return render(request, 'movies/index.html', {'template_data': template_data})
 
 def show(request, id):
-    movie = Movie.objects.get(id=id)
-    reviews = Review.objects.filter(movie=movie, reported=False)
-
+    movie =  Movie.objects.get(id=id)
+    reviews = Review.objects.filter(movie=movie)
+    
+    # Add the rating form to the context
+    rating_form = RatingForm()
+    
     template_data = {}
     template_data['title'] = movie.name
     template_data['movie'] = movie
     template_data['reviews'] = reviews
-    return render(request, 'movies/show.html', {'template_data': template_data})
+    template_data['rating_form'] = rating_form # <-- Add this
+
+    # Also check if the user has already rated this movie to display their current rating
+    if request.user.is_authenticated:
+        current_user_rating = Rating.objects.filter(movie=movie, user=request.user).first()
+        template_data['current_user_rating'] = current_user_rating
+
+    return render(request, 'movies/show.html',
+        {'template_data': template_data})
 
 @login_required
 def create_review(request, id):
@@ -75,6 +87,22 @@ def report_review(request, id, review_id):
     if request.method == 'POST':
         review.reported = True
         review.save()
+    return redirect('movies.show', id=id)
+
+@login_required
+def add_rating(request, id): # <-- Make sure 'id' is here
+    movie = get_object_or_404(Movie, id=id)
+    if request.method == 'POST':
+        form = RatingForm(request.POST)
+        if form.is_valid():
+            # Use update_or_create to let users change their rating
+            rating, created = Rating.objects.update_or_create(
+                movie=movie,
+                user=request.user,
+                defaults={'stars': form.cleaned_data['stars']}
+            )
+            return redirect('movies.show', id=id)
+    # If not a POST request, or if form is invalid, redirect back
     return redirect('movies.show', id=id)
 
 def petitions(request):

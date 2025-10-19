@@ -39,3 +39,22 @@ class Petition(models.Model):
 
     def has_user_voted(self, user):
         return self.votes.filter(id=user.id).exists()
+
+class Rating(models.Model):
+    movie = models.ForeignKey(Movie, on_delete=models.CASCADE, related_name='ratings')
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    stars = models.IntegerField(choices=[(i, i) for i in range(1, 6)]) # 1 to 5 stars
+
+    class Meta:
+        # Ensures a user can only rate a specific movie once
+        unique_together = ('movie', 'user')
+
+    def save(self, *args, **kwargs):
+        # Call the original save method first
+        super().save(*args, **kwargs)
+        
+        # After saving a rating, recalculate and update the movie's average rating
+        # We access the related movie through the 'movie' foreign key
+        movie_ratings = self.movie.ratings.all()
+        self.movie.average_rating = movie_ratings.aggregate(Avg('stars'))['stars__avg']
+        self.movie.save()
