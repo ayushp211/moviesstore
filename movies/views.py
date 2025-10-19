@@ -3,6 +3,8 @@ from django.shortcuts import render, redirect, get_object_or_404
 from .models import Movie, Review, Petition
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from django.http import JsonResponse
+from django.utils import timezone
 
 def index(request):
     search_term = request.GET.get('search')
@@ -120,6 +122,15 @@ def vote_petition(request, petition_id):
     return redirect('movies.petitions')
 
 def local_popularity_map(request):
+    template_data = {}
+    template_data['title'] = 'Local Popularity Map'
+    return render(request, 'movies/local_popularity_map.html', {'template_data': template_data})
+
+def trending_movies_api(request):
+    """
+    API endpoint that returns trending movies data by state.
+    Currently returns hard-coded placeholder data.
+    """
     # Hard-coded placeholder data for movie popularity by state
     state_movie_data = {
         'California': {'movie': 'Inception', 'purchases': 1250, 'trending': True},
@@ -174,7 +185,11 @@ def local_popularity_map(request):
         'Wyoming': {'movie': 'Saving Private Ryan', 'purchases': 4, 'trending': True}
     }
     
-    template_data = {}
-    template_data['title'] = 'Local Popularity Map'
-    template_data['state_movie_data'] = state_movie_data
-    return render(request, 'movies/local_popularity_map.html', {'template_data': template_data})
+    return JsonResponse({
+        'success': True,
+        'data': state_movie_data,
+        'message': 'Trending movies data retrieved successfully',
+        'timestamp': str(timezone.now()),
+        'api_version': '1.0',
+        'total_states': len(state_movie_data)
+    })
