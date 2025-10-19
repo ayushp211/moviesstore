@@ -12,4 +12,5 @@ urlpatterns = [
     path('petitions/', views.petitions, name='movies.petitions'),
     path('petitions/create/', views.create_petition, name='movies.create_petition'),
     path('petitions/<int:petition_id>/vote/', views.vote_petition, name='movies.vote_petition'),
+    path('local-popularity-map/', views.local_popularity_map, name='movies.local_popularity_map'),
 ]

@@ -118,3 +118,63 @@ def vote_petition(request, petition_id):
         messages.success(request, 'Thank you for voting!')
     
     return redirect('movies.petitions')
+
+def local_popularity_map(request):
+    # Hard-coded placeholder data for movie popularity by state
+    state_movie_data = {
+        'California': {'movie': 'Inception', 'purchases': 1250, 'trending': True},
+        'Texas': {'movie': 'Saving Private Ryan', 'purchases': 980, 'trending': True},
+        'Florida': {'movie': 'The Conjuring', 'purchases': 750, 'trending': False},
+        'New York': {'movie': 'Inception', 'purchases': 1100, 'trending': True},
+        'Pennsylvania': {'movie': 'Saving Private Ryan', 'purchases': 650, 'trending': False},
+        'Illinois': {'movie': 'The Conjuring', 'purchases': 580, 'trending': True},
+        'Ohio': {'movie': 'Inception', 'purchases': 520, 'trending': False},
+        'Georgia': {'movie': 'Saving Private Ryan', 'purchases': 480, 'trending': True},
+        'North Carolina': {'movie': 'The Conjuring', 'purchases': 420, 'trending': False},
+        'Michigan': {'movie': 'Inception', 'purchases': 380, 'trending': True},
+        'New Jersey': {'movie': 'Saving Private Ryan', 'purchases': 350, 'trending': False},
+        'Virginia': {'movie': 'The Conjuring', 'purchases': 320, 'trending': True},
+        'Washington': {'movie': 'Inception', 'purchases': 290, 'trending': False},
+        'Arizona': {'movie': 'Saving Private Ryan', 'purchases': 270, 'trending': True},
+        'Massachusetts': {'movie': 'The Conjuring', 'purchases': 250, 'trending': False},
+        'Tennessee': {'movie': 'Inception', 'purchases': 230, 'trending': True},
+        'Indiana': {'movie': 'Saving Private Ryan', 'purchases': 210, 'trending': False},
+        'Missouri': {'movie': 'The Conjuring', 'purchases': 190, 'trending': True},
+        'Maryland': {'movie': 'Inception', 'purchases': 180, 'trending': False},
+        'Wisconsin': {'movie': 'Saving Private Ryan', 'purchases': 170, 'trending': True},
+        'Colorado': {'movie': 'The Conjuring', 'purchases': 160, 'trending': False},
+        'Minnesota': {'movie': 'Inception', 'purchases': 150, 'trending': True},
+        'South Carolina': {'movie': 'Saving Private Ryan', 'purchases': 140, 'trending': False},
+        'Alabama': {'movie': 'The Conjuring', 'purchases': 130, 'trending': True},
+        'Louisiana': {'movie': 'Inception', 'purchases': 120, 'trending': False},
+        'Kentucky': {'movie': 'Saving Private Ryan', 'purchases': 110, 'trending': True},
+        'Oregon': {'movie': 'The Conjuring', 'purchases': 100, 'trending': False},
+        'Oklahoma': {'movie': 'Inception', 'purchases': 95, 'trending': True},
+        'Connecticut': {'movie': 'Saving Private Ryan', 'purchases': 90, 'trending': False},
+        'Utah': {'movie': 'The Conjuring', 'purchases': 85, 'trending': True},
+        'Iowa': {'movie': 'Inception', 'purchases': 80, 'trending': False},
+        'Nevada': {'movie': 'Saving Private Ryan', 'purchases': 75, 'trending': True},
+        'Arkansas': {'movie': 'The Conjuring', 'purchases': 70, 'trending': False},
+        'Mississippi': {'movie': 'Inception', 'purchases': 65, 'trending': True},
+        'Kansas': {'movie': 'Saving Private Ryan', 'purchases': 60, 'trending': False},
+        'New Mexico': {'movie': 'The Conjuring', 'purchases': 55, 'trending': True},
+        'Nebraska': {'movie': 'Inception', 'purchases': 50, 'trending': False},
+        'West Virginia': {'movie': 'Saving Private Ryan', 'purchases': 45, 'trending': True},
+        'Idaho': {'movie': 'The Conjuring', 'purchases': 40, 'trending': False},
+        'Hawaii': {'movie': 'Inception', 'purchases': 35, 'trending': True},
+        'New Hampshire': {'movie': 'Saving Private Ryan', 'purchases': 30, 'trending': False},
+        'Maine': {'movie': 'The Conjuring', 'purchases': 25, 'trending': True},
+        'Montana': {'movie': 'Inception', 'purchases': 20, 'trending': False},
+        'Rhode Island': {'movie': 'Saving Private Ryan', 'purchases': 18, 'trending': True},
+        'Delaware': {'movie': 'The Conjuring', 'purchases': 15, 'trending': False},
+        'South Dakota': {'movie': 'Inception', 'purchases': 12, 'trending': True},
+        'North Dakota': {'movie': 'Saving Private Ryan', 'purchases': 10, 'trending': False},
+        'Alaska': {'movie': 'The Conjuring', 'purchases': 8, 'trending': True},
+        'Vermont': {'movie': 'Inception', 'purchases': 6, 'trending': False},
+        'Wyoming': {'movie': 'Saving Private Ryan', 'purchases': 4, 'trending': True}
+    }
+    
+    template_data = {}
+    template_data['title'] = 'Local Popularity Map'
+    template_data['state_movie_data'] = state_movie_data
+    return render(request, 'movies/local_popularity_map.html', {'template_data': template_data})
