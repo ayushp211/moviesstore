@@ -5,6 +5,9 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.http import JsonResponse
 from django.utils import timezone
+from django.db.models import Count, Sum
+from cart.models import Order, Item
+from datetime import datetime, timedelta
 
 def index(request):
     search_term = request.GET.get('search')
@@ -129,67 +132,79 @@ def local_popularity_map(request):
 def trending_movies_api(request):
     """
     API endpoint that returns trending movies data by state.
-    Currently returns hard-coded placeholder data.
+    Calculates real data from purchase history.
     """
-    # Hard-coded placeholder data for movie popularity by state
-    state_movie_data = {
-        'California': {'movie': 'Inception', 'purchases': 1250, 'trending': True},
-        'Texas': {'movie': 'Saving Private Ryan', 'purchases': 980, 'trending': True},
-        'Florida': {'movie': 'The Conjuring', 'purchases': 750, 'trending': False},
-        'New York': {'movie': 'Inception', 'purchases': 1100, 'trending': True},
-        'Pennsylvania': {'movie': 'Saving Private Ryan', 'purchases': 650, 'trending': False},
-        'Illinois': {'movie': 'The Conjuring', 'purchases': 580, 'trending': True},
-        'Ohio': {'movie': 'Inception', 'purchases': 520, 'trending': False},
-        'Georgia': {'movie': 'Saving Private Ryan', 'purchases': 480, 'trending': True},
-        'North Carolina': {'movie': 'The Conjuring', 'purchases': 420, 'trending': False},
-        'Michigan': {'movie': 'Inception', 'purchases': 380, 'trending': True},
-        'New Jersey': {'movie': 'Saving Private Ryan', 'purchases': 350, 'trending': False},
-        'Virginia': {'movie': 'The Conjuring', 'purchases': 320, 'trending': True},
-        'Washington': {'movie': 'Inception', 'purchases': 290, 'trending': False},
-        'Arizona': {'movie': 'Saving Private Ryan', 'purchases': 270, 'trending': True},
-        'Massachusetts': {'movie': 'The Conjuring', 'purchases': 250, 'trending': False},
-        'Tennessee': {'movie': 'Inception', 'purchases': 230, 'trending': True},
-        'Indiana': {'movie': 'Saving Private Ryan', 'purchases': 210, 'trending': False},
-        'Missouri': {'movie': 'The Conjuring', 'purchases': 190, 'trending': True},
-        'Maryland': {'movie': 'Inception', 'purchases': 180, 'trending': False},
-        'Wisconsin': {'movie': 'Saving Private Ryan', 'purchases': 170, 'trending': True},
-        'Colorado': {'movie': 'The Conjuring', 'purchases': 160, 'trending': False},
-        'Minnesota': {'movie': 'Inception', 'purchases': 150, 'trending': True},
-        'South Carolina': {'movie': 'Saving Private Ryan', 'purchases': 140, 'trending': False},
-        'Alabama': {'movie': 'The Conjuring', 'purchases': 130, 'trending': True},
-        'Louisiana': {'movie': 'Inception', 'purchases': 120, 'trending': False},
-        'Kentucky': {'movie': 'Saving Private Ryan', 'purchases': 110, 'trending': True},
-        'Oregon': {'movie': 'The Conjuring', 'purchases': 100, 'trending': False},
-        'Oklahoma': {'movie': 'Inception', 'purchases': 95, 'trending': True},
-        'Connecticut': {'movie': 'Saving Private Ryan', 'purchases': 90, 'trending': False},
-        'Utah': {'movie': 'The Conjuring', 'purchases': 85, 'trending': True},
-        'Iowa': {'movie': 'Inception', 'purchases': 80, 'trending': False},
-        'Nevada': {'movie': 'Saving Private Ryan', 'purchases': 75, 'trending': True},
-        'Arkansas': {'movie': 'The Conjuring', 'purchases': 70, 'trending': False},
-        'Mississippi': {'movie': 'Inception', 'purchases': 65, 'trending': True},
-        'Kansas': {'movie': 'Saving Private Ryan', 'purchases': 60, 'trending': False},
-        'New Mexico': {'movie': 'The Conjuring', 'purchases': 55, 'trending': True},
-        'Nebraska': {'movie': 'Inception', 'purchases': 50, 'trending': False},
-        'West Virginia': {'movie': 'Saving Private Ryan', 'purchases': 45, 'trending': True},
-        'Idaho': {'movie': 'The Conjuring', 'purchases': 40, 'trending': False},
-        'Hawaii': {'movie': 'Inception', 'purchases': 35, 'trending': True},
-        'New Hampshire': {'movie': 'Saving Private Ryan', 'purchases': 30, 'trending': False},
-        'Maine': {'movie': 'The Conjuring', 'purchases': 25, 'trending': True},
-        'Montana': {'movie': 'Inception', 'purchases': 20, 'trending': False},
-        'Rhode Island': {'movie': 'Saving Private Ryan', 'purchases': 18, 'trending': True},
-        'Delaware': {'movie': 'The Conjuring', 'purchases': 15, 'trending': False},
-        'South Dakota': {'movie': 'Inception', 'purchases': 12, 'trending': True},
-        'North Dakota': {'movie': 'Saving Private Ryan', 'purchases': 10, 'trending': False},
-        'Alaska': {'movie': 'The Conjuring', 'purchases': 8, 'trending': True},
-        'Vermont': {'movie': 'Inception', 'purchases': 6, 'trending': False},
-        'Wyoming': {'movie': 'Saving Private Ryan', 'purchases': 4, 'trending': True}
-    }
+    # Get all US states
+    us_states = [
+        'Alabama', 'Alaska', 'Arizona', 'Arkansas', 'California', 'Colorado', 'Connecticut', 'Delaware',
+        'Florida', 'Georgia', 'Hawaii', 'Idaho', 'Illinois', 'Indiana', 'Iowa', 'Kansas', 'Kentucky',
+        'Louisiana', 'Maine', 'Maryland', 'Massachusetts', 'Michigan', 'Minnesota', 'Mississippi',
+        'Missouri', 'Montana', 'Nebraska', 'Nevada', 'New Hampshire', 'New Jersey', 'New Mexico',
+        'New York', 'North Carolina', 'North Dakota', 'Ohio', 'Oklahoma', 'Oregon', 'Pennsylvania',
+        'Rhode Island', 'South Carolina', 'South Dakota', 'Tennessee', 'Texas', 'Utah', 'Vermont',
+        'Virginia', 'Washington', 'West Virginia', 'Wisconsin', 'Wyoming'
+    ]
+    
+    state_movie_data = {}
+    
+    # Calculate trending movies for each state
+    for state in us_states:
+        # Get all orders from this state
+        state_orders = Order.objects.filter(state=state)
+        
+        if state_orders.exists():
+            # Get movie purchase counts for this state
+            movie_purchases = Item.objects.filter(
+                order__state=state
+            ).values('movie__name').annotate(
+                total_quantity=Sum('quantity'),
+                total_orders=Count('order', distinct=True)
+            ).order_by('-total_quantity')
+            
+            if movie_purchases.exists():
+                # Get the most popular movie
+                most_popular = movie_purchases.first()
+                movie_name = most_popular['movie__name']
+                total_purchases = most_popular['total_quantity']
+                
+                # Calculate if it's trending (purchases in last 30 days vs total)
+                thirty_days_ago = timezone.now() - timedelta(days=30)
+                recent_purchases = Item.objects.filter(
+                    order__state=state,
+                    order__date__gte=thirty_days_ago,
+                    movie__name=movie_name
+                ).aggregate(recent_total=Sum('quantity'))['recent_total'] or 0
+                
+                # Consider trending if recent purchases are > 30% of total
+                trending_threshold = total_purchases * 0.3
+                is_trending = recent_purchases > trending_threshold
+                
+                state_movie_data[state] = {
+                    'movie': movie_name,
+                    'purchases': total_purchases,
+                    'trending': is_trending
+                }
+            else:
+                # No purchases in this state
+                state_movie_data[state] = {
+                    'movie': 'No purchases',
+                    'purchases': 0,
+                    'trending': False
+                }
+        else:
+            # No orders from this state
+            state_movie_data[state] = {
+                'movie': 'No purchases',
+                'purchases': 0,
+                'trending': False
+            }
     
     return JsonResponse({
         'success': True,
         'data': state_movie_data,
-        'message': 'Trending movies data retrieved successfully',
+        'message': 'Trending movies data calculated from purchase history',
         'timestamp': str(timezone.now()),
-        'api_version': '1.0',
-        'total_states': len(state_movie_data)
+        'api_version': '2.0',
+        'total_states': len(state_movie_data),
+        'calculation_method': 'Real-time purchase analysis'
     })

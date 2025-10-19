@@ -15,20 +15,13 @@
         </div>
     </div>
     
-    <!-- API Status Indicator -->
+    <!-- Map Controls -->
     <div class="row mb-3">
         <div class="col-12">
-            <div class="alert alert-info" id="api-status">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <i class="fas fa-info-circle me-2"></i>
-                        <span id="api-status-text">Initializing map data...</span>
-                        <small class="d-block mt-1" id="api-debug-info"></small>
-                    </div>
-                    <button class="btn btn-sm btn-outline-primary" id="refresh-data" onclick="refreshMapData()">
-                        <i class="fas fa-sync-alt me-1"></i>Refresh Data
-                    </button>
-                </div>
+            <div class="d-flex justify-content-end">
+                <button class="btn btn-sm btn-outline-primary" id="refresh-data" onclick="refreshMapData()">
+                    <i class="fas fa-sync-alt me-1"></i>Refresh Data
+                </button>
             </div>
         </div>
     </div>
@@ -139,45 +132,16 @@ const stateCoordinates = {
 
 // Wait for DOM to be ready
 document.addEventListener('DOMContentLoaded', function() {
-    // Update API status
-    const apiStatus = document.getElementById('api-status');
-    const apiStatusText = document.getElementById('api-status-text');
-    const apiDebugInfo = document.getElementById('api-debug-info');
-    
     // Show loading indicator
     const mapContainer = document.getElementById('map');
     mapContainer.innerHTML = '<div class="d-flex justify-content-center align-items-center h-100"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div></div>';
-    
-    // Update status to show API call
-    apiStatus.className = 'alert alert-warning';
-    apiStatusText.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Fetching data from API...';
-    apiDebugInfo.textContent = `API Endpoint: ${API_ENDPOINT} | Timestamp: ${new Date().toLocaleString()}`;
 
     // Fetch data from API
     fetch(API_ENDPOINT)
-        .then(response => {
-            console.log('API Response received:', response.status, response.statusText);
-            return response.json();
-        })
+        .then(response => response.json())
         .then(result => {
             if (result.success) {
                 const stateMovieData = result.data;
-                console.log('State movie data loaded from API:', stateMovieData);
-                console.log('Number of states with data:', Object.keys(stateMovieData).length);
-                
-                // Update status to show success
-                apiStatus.className = 'alert alert-success';
-                apiStatusText.innerHTML = '<i class="fas fa-check-circle me-2"></i>Data loaded successfully from API!';
-                apiDebugInfo.innerHTML = `
-                    <strong>API Call Successful!</strong><br>
-                    Endpoint: ${API_ENDPOINT}<br>
-                    States Loaded: ${Object.keys(stateMovieData).length}<br>
-                    API Timestamp: ${result.timestamp || 'N/A'}<br>
-                    API Version: ${result.api_version || 'N/A'}<br>
-                    Total States: ${result.total_states || Object.keys(stateMovieData).length}<br>
-                    Client Load Time: ${new Date().toLocaleString()}<br>
-                    Response Message: "${result.message}"
-                `;
                 
                 // Initialize the map
                 const map = L.map('map').setView([39.8283, -98.5795], 4);
@@ -188,13 +152,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 }).addTo(map);
 
                 // Create markers for each state
-                console.log('Creating markers for', Object.keys(stateMovieData).length, 'states');
-                let markersCreated = 0;
                 Object.keys(stateMovieData).forEach(stateName => {
                     const data = stateMovieData[stateName];
                     const coords = stateCoordinates[stateName];
-                    
-                    console.log(`Processing ${stateName}:`, data, 'coords:', coords);
                     
                     if (coords) {
                         // Choose marker color based on trending status
@@ -233,12 +193,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         `;
                         
                         marker.bindPopup(popupContent);
-                        markersCreated++;
-                    } else {
-                        console.warn(`No coordinates found for state: ${stateName}`);
                     }
                 });
-                console.log(`Successfully created ${markersCreated} markers`);
 
                 // Add some custom CSS for better popup styling
                 const style = document.createElement('style');
@@ -263,28 +219,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 document.head.appendChild(style);
             } else {
                 // Handle API error
-                console.error('API Error:', result.message);
-                apiStatus.className = 'alert alert-danger';
-                apiStatusText.innerHTML = '<i class="fas fa-exclamation-triangle me-2"></i>API Error - Data load failed!';
-                apiDebugInfo.innerHTML = `
-                    <strong>API Error Response:</strong><br>
-                    Endpoint: ${API_ENDPOINT}<br>
-                    Error: ${result.message}<br>
-                    Time: ${new Date().toLocaleString()}
-                `;
                 mapContainer.innerHTML = '<div class="d-flex justify-content-center align-items-center h-100"><div class="alert alert-danger">Failed to load map data. Please try again later.</div></div>';
             }
         })
         .catch(error => {
-            console.error('Fetch Error:', error);
-            apiStatus.className = 'alert alert-danger';
-            apiStatusText.innerHTML = '<i class="fas fa-exclamation-triangle me-2"></i>Network Error - Cannot reach API!';
-            apiDebugInfo.innerHTML = `
-                <strong>Network Error:</strong><br>
-                Endpoint: ${API_ENDPOINT}<br>
-                Error: ${error.message}<br>
-                Time: ${new Date().toLocaleString()}
-            `;
             mapContainer.innerHTML = '<div class="d-flex justify-content-center align-items-center h-100"><div class="alert alert-danger">Failed to load map data. Please try again later.</div></div>';
         });
 
@@ -292,28 +230,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Global function to refresh map data
 function refreshMapData() {
-    console.log('Manual refresh triggered by user');
-    location.reload(); // Simple reload to demonstrate API call
+    location.reload();
 }
-
-// Add a function to show API call proof
-function demonstrateApiCall() {
-    const apiStatus = document.getElementById('api-status');
-    const apiStatusText = document.getElementById('api-status-text');
-    const apiDebugInfo = document.getElementById('api-debug-info');
-    
-    apiStatus.className = 'alert alert-warning';
-    apiStatusText.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Making fresh API call...';
-    apiDebugInfo.innerHTML = `
-        <strong>Live API Call Demonstration:</strong><br>
-        Endpoint: ${API_ENDPOINT}<br>
-        Method: GET<br>
-        Timestamp: ${new Date().toLocaleString()}<br>
-        <em>This proves data is fetched from API, not hard-coded!</em>
-    `;
-}
-
-// Show initial API call proof
-setTimeout(demonstrateApiCall, 1000);
 </script>
 {% endblock %}

@@ -7,7 +7,28 @@
       <div class="col mx-auto mb-3">
         <h2>Purchase Completed</h2>
         <hr />
-        <p>Congratulations, purchase completed. Order number is: <b>#{{ template_data.order_id }}</b></p>
+        <div class="alert alert-success">
+          <h4 class="alert-heading">Order Confirmed!</h4>
+          <p>Congratulations, your purchase has been completed successfully.</p>
+          <hr>
+          <p class="mb-0">
+            <strong>Order Number:</strong> #{{ template_data.order_id }}<br>
+            {% if template_data.city and template_data.state %}
+            <strong>Location:</strong> {{ template_data.city }}, {{ template_data.state }}<br>
+            {% endif %}
+            <strong>Date:</strong> {{ "now"|date:"F d, Y \a\t g:i A" }}
+          </p>
+        </div>
+        
+        <div class="mt-4">
+          <p>Your purchase location has been recorded and will help us show trending movies in your area!</p>
+          <a href="{% url 'movies.local_popularity_map' %}" class="btn btn-primary">
+            <i class="fas fa-map-marked-alt me-2"></i>View Trending Movies Map
+          </a>
+          <a href="{% url 'movies.index' %}" class="btn btn-outline-primary">
+            <i class="fas fa-film me-2"></i>Browse More Movies
+          </a>
+        </div>
       </div>
     </div>
   </div>
