@@ -10,6 +10,26 @@
         <hr />
         <p><b>Description:</b> {{ template_data.movie.description }}</p>
         <p><b>Price:</b> ${{ template_data.movie.price }}</p>
+        
+        <!-- Rating Display -->
+        <div class="mb-3">
+          <p><b>Average Rating:</b> 
+            {% if template_data.movie.average_rating and template_data.movie.average_rating > 0 %}
+              <span class="text-warning">
+                {% for i in "12345" %}
+                  {% if forloop.counter <= template_data.movie.average_rating %}
+                    <i class="fas fa-star"></i>
+                  {% else %}
+                    <i class="far fa-star"></i>
+                  {% endif %}
+                {% endfor %}
+                ({{ template_data.movie.average_rating|floatformat:1 }}/5.0)
+              </span>
+            {% else %}
+              <span class="text-muted">No ratings yet</span>
+            {% endif %}
+          </p>
+        </div>
         <p class="card-text">
           <form method="post" action="{% url 'cart.add' id=template_data.movie.id %}">
             <div class="row">
@@ -26,6 +46,51 @@
             </div>
           </form>
         </p>
+
+        <!-- Rating Form -->
+        {% if user.is_authenticated %}
+        <div class="mb-4">
+          <h4>Rate this Movie</h4>
+          <hr />
+          {% if template_data.current_user_rating %}
+            <p class="text-success">
+              <i class="fas fa-check-circle"></i> 
+              You rated this movie: 
+              <span class="text-warning">
+                {% for i in "12345" %}
+                  {% if forloop.counter <= template_data.current_user_rating.stars %}
+                    <i class="fas fa-star"></i>
+                  {% else %}
+                    <i class="far fa-star"></i>
+                  {% endif %}
+                {% endfor %}
+                ({{ template_data.current_user_rating.stars }}/5)
+              </span>
+            </p>
+          {% endif %}
+          
+          <form method="POST" action="{% url 'movies.add_rating' id=template_data.movie.id %}">
+            {% csrf_token %}
+            <div class="row align-items-center">
+              <div class="col-auto">
+                <label for="id_stars" class="form-label">Your Rating:</label>
+              </div>
+              <div class="col-auto">
+                {{ template_data.rating_form.stars }}
+              </div>
+              <div class="col-auto">
+                <button type="submit" class="btn btn-warning">
+                  {% if template_data.current_user_rating %}
+                    Update Rating
+                  {% else %}
+                    Submit Rating
+                  {% endif %}
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+        {% endif %}
 
         <h2>Reviews</h2>
         <hr />

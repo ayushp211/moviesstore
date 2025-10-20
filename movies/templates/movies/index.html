@@ -31,8 +31,32 @@
         <div class="p-2 card align-items-center pt-4">
           <img src="{{ movie.image.url }}" class="card-img-top rounded img-card-200">
           <div class="card-body text-center">
-            <a href="{% url 'movies.show' id=movie.id %}" class="btn bg-dark text-white">
-              {{ movie.name }}
+            <h6 class="card-title">{{ movie.name }}</h6>
+            <p class="card-text">
+              <small class="text-muted">${{ movie.price }}</small>
+            </p>
+            {% if movie.average_rating %}
+              <div class="mb-2">
+                <span class="text-warning">
+                  {% for i in "12345" %}
+                    {% if forloop.counter <= movie.average_rating %}
+                      <i class="fas fa-star"></i>
+                    {% elif forloop.counter|add:"-1" < movie.average_rating %}
+                      <i class="fas fa-star-half-alt"></i>
+                    {% else %}
+                      <i class="far fa-star"></i>
+                    {% endif %}
+                  {% endfor %}
+                </span>
+                <small class="text-muted">({{ movie.average_rating|floatformat:1 }})</small>
+              </div>
+            {% else %}
+              <div class="mb-2">
+                <small class="text-muted">No ratings yet</small>
+              </div>
+            {% endif %}
+            <a href="{% url 'movies.show' id=movie.id %}" class="btn bg-dark text-white btn-sm">
+              View Details
             </a>
           </div>
         </div>

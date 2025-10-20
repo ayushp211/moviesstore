@@ -1,6 +1,7 @@
 
 from django.db import models
 from django.contrib.auth.models import User
+from django.db.models import Avg
 
 class Movie(models.Model):
     id = models.AutoField(primary_key=True)
@@ -8,6 +9,7 @@ class Movie(models.Model):
     price = models.IntegerField()
     description = models.TextField()
     image = models.ImageField(upload_to='movie_images/')
+    average_rating = models.FloatField(default=0.0, null=True, blank=True)
 
     def __str__(self):
         return str(self.id) + ' - ' + self.name
